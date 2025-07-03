@@ -1,0 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f7f8fa;
+  margin: 0;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  color: #222;
+  margin-bottom: 30px;
+  font-weight: 600;
+}
+
+.button-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+button {
+  margin: 5px;
+  padding: 12px 24px;
+  font-size: 16px;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+}
+
+.filter-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+select {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.card-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  width: 300px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid #eaeaea;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+}
+
+.card h3 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.card p {
+  margin: 6px 0;
+  color: #555;
+  font-size: 15px;
+}
+
+.label,
+.card .highlight {
+  font-weight: 600;
+  color: #0077cc;
+}
+
+/* Category Badge */
+.category-badge {
+  display: inline-block;
+  font-weight: bold;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  margin-bottom: 12px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Category Colors */
+.category-cat1 {
+  background-color: #ff6b6b;  /* Category A - red */
+  color: white;
+}
+.category-cat2 {
+  background-color: #4ecdc4;  /* Category B - teal */
+  color: white;
+}
+.category-cat3 {
+  background-color: #ffa502;  /* Category C - orange */
+  color: white;
+}
+@media (max-width: 500px) {
+  .card {
+    width: 90%;
+  }
+
+  .button-container button {
+    width: 90%;
+    margin: 8px auto;
+    display: block;
+  }
+}
