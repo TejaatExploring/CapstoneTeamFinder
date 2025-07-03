@@ -85,15 +85,23 @@ select {
   color: #0077cc;
 }
 
-/* Category Badge */
+/* Category Badges Container */
+.badge-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  justify-content: center;
+}
+
+/* Individual Badge */
 .category-badge {
   display: inline-block;
   font-weight: bold;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 14px;
-  margin-bottom: 12px;
-  text-align: center;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  white-space: nowrap;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
@@ -110,6 +118,8 @@ select {
   background-color: #ffa502;  /* Category C - orange */
   color: white;
 }
+
+/* Responsive for mobile */
 @media (max-width: 500px) {
   .card {
     width: 90%;
