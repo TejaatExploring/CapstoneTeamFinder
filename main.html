@@ -43,12 +43,27 @@
         console.error('Error fetching data:', error);
       });
 
+
     filter.addEventListener('change', () => {
-      const selected = filter.value;
-      if (selected === "All") {
+      const selected = filter.value.toUpperCase();
+
+      if (selected === "ALL") {
         renderCards(allData);
       } else {
-        const filtered = allData.filter(row => (row['Category of Student Needed'] || "").trim().toUpperCase() === selected);
+        const filtered = allData.filter(row => {
+          const vacancies = (row["No. Of Vacancies"] || "").trim();
+          const cats = [];
+
+          if (vacancies === "1") {
+            cats.push((row["Category of Student Needed - 01"] || "").toUpperCase());
+          } else if (vacancies === "2") {
+            cats.push((row["Category of Student Needed - 1"] || "").toUpperCase());
+            cats.push((row["Category of Student Needed - 2"] || "").toUpperCase());
+          }
+
+          return cats.includes(selected);
+        });
+
         renderCards(filtered);
       }
     });
@@ -70,16 +85,36 @@
           row['Name 3'] && row['SRN 3'] ? `${row['Name 3']} (${row['SRN 3']})` : null
         ].filter(Boolean).join('<br>');
 
-        const category = (row['Category of Student Needed'] || "Not specified").trim().toUpperCase();
-        let categoryClass = "";
-        if (category === "CATEGORY A") categoryClass = "category-cat1";
-        else if (category === "CATEGORY B") categoryClass = "category-cat2";
-        else if (category === "CATEGORY C") categoryClass = "category-cat3";
+        const vacancies = (row["No. Of Vacancies"] || "").trim();
+        const safeVacancyText = vacancies ? `Looking for ${vacancies} member(s)` : `Vacancy info not available`;
+
+        const neededCategories = [];
+
+        if (vacancies === "1") {
+          neededCategories.push(row["Category of Student Needed - 01"]);
+        } else if (vacancies === "2") {
+          neededCategories.push(row["Category of Student Needed - 1"]);
+          neededCategories.push(row["Category of Student Needed - 2"]);
+        }
+
+        const badgesHTML = `
+          <div class="badge-container">
+            ${neededCategories.map(cat => {
+              const category = (cat || "Not specified").trim().toUpperCase();
+              let categoryClass = "";
+              if (category === "CATEGORY A") categoryClass = "category-cat1";
+              else if (category === "CATEGORY B") categoryClass = "category-cat2";
+              else if (category === "CATEGORY C") categoryClass = "category-cat3";
+
+              return `<div class="category-badge ${categoryClass}">${category}</div>`;
+            }).join("")}
+          </div>`;
 
         card.innerHTML = `
-          <div class="category-badge ${categoryClass}">${category}</div>
+          ${badgesHTML}
           <h3>Team Members</h3>
           <p>${teamMembers}</p>
+          <p><strong>${safeVacancyText}</strong></p>
           <p>
             <span class="label">Primary Contact:</span><br>${row['Primary Contact number'] || 'Not provided'}<br>
             <span class="label">Secondary Contact:</span><br>${row['Secondary Contact number'] || '—'}
