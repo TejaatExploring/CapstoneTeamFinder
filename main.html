@@ -103,14 +103,20 @@
             }).join("")}
           </div>`;
 
+        const primary = row['Primary Contact number']?.trim();
+        const secondary = row['Secondary Contact number']?.trim();
+
+        const contactHTML = `
+          <p>
+            <span class="label">Contact :</span><br>${primary || 'Not provided'}<br>
+            ${secondary ? `<span class="label">Secondary Contact:</span><br>${secondary}` : ''}
+          </p>`;
+
         card.innerHTML = `
           ${badgesHTML}
           <h3>Team Members</h3>
           <p>${teamMembers}</p>
-          <p>
-            <span class="label">Primary Contact:</span><br>${row['Primary Contact number'] || 'Not provided'}<br>
-            <span class="label">Secondary Contact:</span><br>${row['Secondary Contact number'] || '—'}
-          </p>
+          ${contactHTML}
         `;
 
         container.appendChild(card);
