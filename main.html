@@ -37,9 +37,9 @@
     fetch(SHEET_URL)
       .then(res => res.json())
       .then(data => {
-        allData = data;
-        renderCards(allData);
-      })
+            allData = data.reverse(); 
+            renderCards(allData);
+            })
       .catch(error => {
         console.error('Error fetching data:', error);
       });
