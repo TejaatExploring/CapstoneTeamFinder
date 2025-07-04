@@ -37,36 +37,39 @@
     fetch(SHEET_URL)
       .then(res => res.json())
       .then(data => {
-            allData = data.reverse(); 
-            renderCards(allData);
-            })
-      .catch(error => {
-        console.error('Error fetching data:', error);
-      });
+        allData = data.reverse(); // newest first
+        renderCards(allData);
+      })
+      .catch(err => console.error("Error loading data", err));
 
-    filter.addEventListener('change', () => {
+    filter.addEventListener("change", () => {
       const selected = filter.value.toUpperCase();
-
       if (selected === "ALL") {
         renderCards(allData);
       } else {
         const filtered = allData.filter(row => {
-          const vacancies = (row["No. Of Vacancies"] || "").trim();
-          const cats = [];
-
-          if (vacancies === "1") {
-            cats.push((row["Category of Student Needed - 01"] || "").toUpperCase());
-          } else if (vacancies === "2") {
-            cats.push((row["Category of Student Needed - 1"] || "").toUpperCase());
-            cats.push((row["Category of Student Needed - 2"] || "").toUpperCase());
-          }
-
+          const cats = extractCategories(row).map(c => c.toUpperCase());
           return cats.includes(selected);
         });
-
         renderCards(filtered);
       }
     });
+
+    function extractCategories(row) {
+      const cats = [];
+      const fields = [
+        "Category of Student Needed - 01",
+        "Category of Student Needed - 1",
+        "Category of Student Needed - 02",
+        "Category of Student Needed - 2"
+      ];
+      fields.forEach(field => {
+        if (row[field] && row[field].trim()) {
+          cats.push(row[field].trim());
+        }
+      });
+      return cats;
+    }
 
     function renderCards(data) {
       container.innerHTML = "";
@@ -88,19 +91,12 @@
         const vacancies = (row["No. Of Vacancies"] || "").trim();
         const safeVacancyText = vacancies ? `Looking for ${vacancies} member(s)` : `Vacancy info not available`;
 
-        const neededCategories = [];
-
-        if (vacancies === "1") {
-          neededCategories.push(row["Category of Student Needed - 01"]);
-        } else if (vacancies === "2") {
-          neededCategories.push(row["Category of Student Needed - 1"]);
-          neededCategories.push(row["Category of Student Needed - 2"]);
-        }
+        const categories = extractCategories(row);
 
         const badgesHTML = `
           <div class="badge-container">
-            ${neededCategories.map(cat => {
-              const category = (cat || "Not specified").trim().toUpperCase();
+            ${categories.map(cat => {
+              const category = cat.toUpperCase();
               let categoryClass = "";
               if (category === "CATEGORY A") categoryClass = "category-cat1";
               else if (category === "CATEGORY B") categoryClass = "category-cat2";
