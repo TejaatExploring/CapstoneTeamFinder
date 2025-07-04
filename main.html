@@ -89,6 +89,7 @@
         ].filter(Boolean).join('<br>');
 
         const categories = extractCategories(row);
+        const domain = row["Mention the Domain Your team is working on"]?.trim();
 
         const badgesHTML = `
           <div class="badge-container">
@@ -98,7 +99,6 @@
               if (category === "CATEGORY A") categoryClass = "category-cat1";
               else if (category === "CATEGORY B") categoryClass = "category-cat2";
               else if (category === "CATEGORY C") categoryClass = "category-cat3";
-
               return `<div class="category-badge ${categoryClass}">${category}</div>`;
             }).join("")}
           </div>`;
@@ -108,14 +108,17 @@
 
         const contactHTML = `
           <p>
-            <span class="label">Contact :</span><br>${primary || 'Not provided'}<br>
+            <span class="label">Primary Contact:</span><br>${primary || 'Not provided'}<br>
             ${secondary ? `<span class="label">Secondary Contact:</span><br>${secondary}` : ''}
           </p>`;
+
+        const domainHTML = domain ? `<p><span class="label">Project Domain:</span><br>${domain}</p>` : '';
 
         card.innerHTML = `
           ${badgesHTML}
           <h3>Team Members</h3>
           <p>${teamMembers}</p>
+          ${domainHTML}
           ${contactHTML}
         `;
 
