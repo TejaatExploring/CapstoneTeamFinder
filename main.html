@@ -88,9 +88,6 @@
           row['Name 3'] && row['SRN 3'] ? `${row['Name 3']} (${row['SRN 3']})` : null
         ].filter(Boolean).join('<br>');
 
-        const vacancies = (row["No. Of Vacancies"] || "").trim();
-        const safeVacancyText = vacancies ? `Looking for ${vacancies} member(s)` : `Vacancy info not available`;
-
         const categories = extractCategories(row);
 
         const badgesHTML = `
@@ -110,7 +107,6 @@
           ${badgesHTML}
           <h3>Team Members</h3>
           <p>${teamMembers}</p>
-          <p><strong>${safeVacancyText}</strong></p>
           <p>
             <span class="label">Primary Contact:</span><br>${row['Primary Contact number'] || 'Not provided'}<br>
             <span class="label">Secondary Contact:</span><br>${row['Secondary Contact number'] || '—'}
