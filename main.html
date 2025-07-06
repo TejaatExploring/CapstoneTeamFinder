@@ -2,24 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Capstone Team Finder</title>
-  <link rel="stylesheet" href="Stylesheet1.css" />
+  <link rel="stylesheet" href="Stylesheet1.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
-  <!-- Google Analytics tag -->
+  <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-TD13HR5DER"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-
     gtag('config', 'G-TD13HR5DER');
   </script>
 </head>
 
 <body>
-
   <h1>Capstone Team Finder</h1>
 
   <div class="button-container">
@@ -36,34 +34,53 @@
     </select>
   </div>
 
+  <!-- ✅ Loading Spinner -->
+  <div id="loading-screen">
+    <div class="spinner"></div>
+    <div>Loading teams...</div>
+  </div>
+
+  <!-- Card Container -->
   <div class="card-container" id="cardsContainer"></div>
 
+  <!-- Script -->
   <script>
     const SHEET_URL = 'https://opensheet.elk.sh/1CYF6BsqAAN3ThqjgyPxPhLJL23Uf1TBeLL5ZEtDDjQA/posts_public';
     const container = document.getElementById("cardsContainer");
     const filter = document.getElementById("categoryFilter");
+    const loadingScreen = document.getElementById("loading-screen");
 
     let allData = [];
+    let filteredData = [];
+    let batchSize = 20;
+    let currentIndex = 0;
 
     fetch(SHEET_URL)
       .then(res => res.json())
       .then(data => {
-        allData = data.reverse(); // newest first
-        renderCards(allData);
+        allData = data.reverse();
+        filteredData = allData;
+        renderNextBatch();
+        loadingScreen.style.display = "none";
       })
-      .catch(err => console.error("Error loading data", err));
+      .catch(err => {
+        console.error("Error loading data", err);
+        loadingScreen.innerHTML = "<div>❌ Failed to load data.</div>";
+      });
 
     filter.addEventListener("change", () => {
       const selected = filter.value.toUpperCase();
       if (selected === "ALL") {
-        renderCards(allData);
+        filteredData = allData;
       } else {
-        const filtered = allData.filter(row => {
+        filteredData = allData.filter(row => {
           const cats = extractCategories(row).map(c => c.toUpperCase());
           return cats.includes(selected);
         });
-        renderCards(filtered);
       }
+      container.innerHTML = "";
+      currentIndex = 0;
+      renderNextBatch();
     });
 
     function extractCategories(row) {
@@ -82,61 +99,65 @@
       return cats;
     }
 
-    function renderCards(data) {
-      container.innerHTML = "";
-      if (data.length === 0) {
-        container.innerHTML = "<p>No teams found for this category.</p>";
-        return;
-      }
-
-      data.forEach(row => {
-        const card = document.createElement("div");
-        card.className = "card";
-
-        const teamMembers = [
-          `${row['Name 1']} (${row['SRN 1']})`,
-          `${row['Name 2']} (${row['SRN 2']})`,
-          row['Name 3'] && row['SRN 3'] ? `${row['Name 3']} (${row['SRN 3']})` : null
-        ].filter(Boolean).join('<br>');
-
-        const categories = extractCategories(row);
-        const domain = row["Mention the Domain Your team is working on"]?.trim();
-
-        const badgesHTML = `
-          <div class="badge-container">
-            ${categories.map(cat => {
-              const category = cat.toUpperCase();
-              let categoryClass = "";
-              if (category === "CATEGORY A") categoryClass = "category-cat1";
-              else if (category === "CATEGORY B") categoryClass = "category-cat2";
-              else if (category === "CATEGORY C") categoryClass = "category-cat3";
-              return `<div class="category-badge ${categoryClass}">${category}</div>`;
-            }).join("")}
-          </div>`;
-
-        const primary = row['Primary Contact number/email']?.trim();
-        const secondary = row['Secondary Contact number/email']?.trim();
-
-        const contactHTML = `
-          <p>
-            <span class="label">Primary Contact:</span><br>${primary || 'Not provided'}<br>
-            ${secondary ? `<span class="label">Secondary Contact:</span><br>${secondary}` : ''}
-          </p>`;
-
-        const domainHTML = domain ? `<p><span class="label">Project Domain:</span><br>${domain}</p>` : '';
-
-        card.innerHTML = `
-          ${badgesHTML}
-          <h3>Team Members</h3>
-          <p>${teamMembers}</p>
-          ${domainHTML}
-          ${contactHTML}
-        `;
-
-        container.appendChild(card);
-      });
+    function renderNextBatch() {
+      const nextBatch = filteredData.slice(currentIndex, currentIndex + batchSize);
+      nextBatch.forEach(renderCard);
+      currentIndex += batchSize;
     }
-  </script>
 
+    function renderCard(row) {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const teamMembers = [
+        `${row['Name 1']} (${row['SRN 1']})`,
+        `${row['Name 2']} (${row['SRN 2']})`,
+        row['Name 3'] && row['SRN 3'] ? `${row['Name 3']} (${row['SRN 3']})` : null
+      ].filter(Boolean).join('<br>');
+
+      const categories = extractCategories(row);
+      const domain = row["Mention the Domain Your team is working on"]?.trim();
+
+      const badgesHTML = `
+        <div class="badge-container">
+          ${categories.map(cat => {
+            const category = cat.toUpperCase();
+            let categoryClass = "";
+            if (category === "CATEGORY A") categoryClass = "category-cat1";
+            else if (category === "CATEGORY B") categoryClass = "category-cat2";
+            else if (category === "CATEGORY C") categoryClass = "category-cat3";
+            return `<div class="category-badge ${categoryClass}">${category}</div>`;
+          }).join("")}
+        </div>`;
+
+      const primary = row['Primary Contact number/email']?.trim();
+      const secondary = row['Secondary Contact number/email']?.trim();
+
+      const contactHTML = `
+        <p>
+          <span class="label">Primary Contact:</span><br>${primary || 'Not provided'}<br>
+          ${secondary ? `<span class="label">Secondary Contact:</span><br>${secondary}` : ''}
+        </p>`;
+
+      const domainHTML = domain ? `<p><span class="label">Project Domain:</span><br>${domain}</p>` : '';
+
+      card.innerHTML = `
+        ${badgesHTML}
+        <h3>Team Members</h3>
+        <p>${teamMembers}</p>
+        ${domainHTML}
+        ${contactHTML}
+      `;
+
+      container.appendChild(card);
+    }
+
+    window.addEventListener("scroll", () => {
+      const scrollBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 200;
+      if (scrollBottom && currentIndex < filteredData.length) {
+        renderNextBatch();
+      }
+    });
+  </script>
 </body>
 </html>
