@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Capstone Team Finder</title>
   <link rel="stylesheet" href="Stylesheet1.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-TD13HR5DER"></script>
@@ -19,69 +19,92 @@
 
 <body>
   <h1>Capstone Team Finder</h1>
+  <p class="subtitle">Connect with your future teammates and build something amazing.</p>
+  <p id="resultCounter" style="text-align: center; color: var(--text-muted); margin-bottom: 20px; font-weight: 600;"></p>
 
-  <div class="button-container">
-    <button onclick="window.open('https://forms.gle/viUSTWx42FyBRLEg8', '_blank')">➕ Post a New Team</button>
-    <button onclick="window.open('https://forms.gle/KeUr9XjR7jZ9MDaN8', '_blank')">🗑️ Delete My Team Post</button>
+  <div class="controls-wrapper">
+    <div class="search-filter-container">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔍 Search by name, SRN, or domain...">
+      </div>
+      <div class="filter-box">
+        <select id="categoryFilter">
+          <option value="All">All Categories</option>
+          <!-- Categories will be loaded dynamically -->
+        </select>
+      </div>
+    </div>
+    
+    <div class="button-container">
+      <button class="btn btn-primary" onclick="window.open('https://forms.gle/viUSTWx42FyBRLEg8', '_blank')">➕ Post a New Team</button>
+      <button class="btn btn-secondary" onclick="window.open('https://forms.gle/KeUr9YjR7jZ9MDaN8', '_blank')">🗑️ Delete My Team Post</button>
+    </div>
   </div>
 
-  <div class="filter-container">
-    <select id="categoryFilter">
-      <option value="All">🔍 Show All Categories</option>
-      <option value="CATEGORY A">Category A</option>
-      <option value="CATEGORY B">Category B</option>
-      <option value="CATEGORY C">Category C</option>
-    </select>
+  <div class="card-container" id="cardsContainer">
+    <!-- ✅ Loading Spinner -->
+    <div id="loading-screen">
+      <div class="spinner"></div>
+      <div>Discovering teams...</div>
+    </div>
   </div>
 
-  <!-- ✅ Loading Spinner -->
-  <div id="loading-screen">
-    <div class="spinner"></div>
-    <div>Loading teams...</div>
-  </div>
+  <button class="theme-toggle" id="themeToggle" title="Toggle Theme">🌓</button>
+  <button class="theme-toggle" id="backToTop" title="Back to Top" style="right: 100px; display: none;">↑</button>
 
-  <!-- Card Container -->
-  <div class="card-container" id="cardsContainer"></div>
-
-  <!-- Script -->
   <script>
     const SHEET_URL = 'https://opensheet.elk.sh/1CYF6BsqAAN3ThqjgyPxPhLJL23Uf1TBeLL5ZEtDDjQA/posts_public';
     const container = document.getElementById("cardsContainer");
-    const filter = document.getElementById("categoryFilter");
+    const categoryFilter = document.getElementById("categoryFilter");
+    const searchInput = document.getElementById("searchInput");
     const loadingScreen = document.getElementById("loading-screen");
+    const themeToggle = document.getElementById("themeToggle");
 
     let allData = [];
     let filteredData = [];
-    let batchSize = 20;
+    let batchSize = 21; // Multiples of 3 look better in grid
     let currentIndex = 0;
 
+    // Theme Toggle
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+
+    // Initialize Theme
+    const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    // Fetch Data
     fetch(SHEET_URL)
       .then(res => res.json())
       .then(data => {
         allData = data.reverse();
-        filteredData = allData;
-        renderNextBatch();
+        populateCategories(allData);
+        updateFilteredData();
         loadingScreen.style.display = "none";
       })
       .catch(err => {
         console.error("Error loading data", err);
-        loadingScreen.innerHTML = "<div>❌ Failed to load data.</div>";
+        loadingScreen.innerHTML = "<div>❌ Failed to load data. Please refresh.</div>";
       });
 
-    filter.addEventListener("change", () => {
-      const selected = filter.value.toUpperCase();
-      if (selected === "ALL") {
-        filteredData = allData;
-      } else {
-        filteredData = allData.filter(row => {
-          const cats = extractCategories(row).map(c => c.toUpperCase());
-          return cats.includes(selected);
-        });
-      }
-      container.innerHTML = "";
-      currentIndex = 0;
-      renderNextBatch();
-    });
+    function populateCategories(data) {
+      const categorySet = new Set();
+      data.forEach(row => {
+        extractCategories(row).forEach(cat => categorySet.add(cat.toUpperCase()));
+      });
+      
+      const sortedCategories = Array.from(categorySet).sort();
+      sortedCategories.forEach(cat => {
+        const option = document.createElement("option");
+        option.value = cat;
+        option.textContent = cat.charAt(0) + cat.slice(1).toLowerCase();
+        categoryFilter.appendChild(option);
+      });
+    }
 
     function extractCategories(row) {
       const cats = [];
@@ -99,65 +122,150 @@
       return cats;
     }
 
+    const resultCounter = document.getElementById("resultCounter");
+    const backToTop = document.getElementById("backToTop");
+
+    // Back to Top Logic
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 500) {
+        backToTop.style.display = "flex";
+      } else {
+        backToTop.style.display = "none";
+      }
+    });
+
+    backToTop.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    function updateFilteredData() {
+      const selectedCategory = categoryFilter.value.toUpperCase();
+      const searchTerm = searchInput.value.toLowerCase();
+
+      filteredData = allData.filter(row => {
+        // Category Filter
+        let matchesCategory = selectedCategory === "ALL";
+        if (!matchesCategory) {
+          const cats = extractCategories(row).map(c => c.toUpperCase());
+          matchesCategory = cats.includes(selectedCategory);
+        }
+
+        // Search Filter
+        const searchText = [
+          row['Name 1'], row['Name 2'], row['Name 3'],
+          row['SRN 1'], row['SRN 2'], row['SRN 3'],
+          row["Mention the Domain Your team is working on"]
+        ].join(" ").toLowerCase();
+        
+        const matchesSearch = searchText.includes(searchTerm);
+
+        return matchesCategory && matchesSearch;
+      });
+
+      // Update Counter
+      resultCounter.textContent = `Showing ${filteredData.length} team${filteredData.length === 1 ? '' : 's'}`;
+
+      container.innerHTML = "";
+      if (filteredData.length === 0) {
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
+          <h3>No teams found matching your criteria.</h3>
+          <p>Try adjusting your search or filters.</p>
+        </div>`;
+      } else {
+        currentIndex = 0;
+        renderNextBatch();
+      }
+    }
+
+    categoryFilter.addEventListener("change", updateFilteredData);
+    searchInput.addEventListener("input", () => {
+      // Debounce search
+      clearTimeout(this.searchTimeout);
+      this.searchTimeout = setTimeout(updateFilteredData, 300);
+    });
+
     function renderNextBatch() {
       const nextBatch = filteredData.slice(currentIndex, currentIndex + batchSize);
       nextBatch.forEach(renderCard);
       currentIndex += batchSize;
     }
 
+    function formatContact(val) {
+      if (!val) return null;
+      val = val.trim();
+      // Simple check for email
+      if (val.includes('@')) {
+        return `<a href="mailto:${val}" class="contact-link">📧 ${val}</a>`;
+      }
+      // Simple check for phone (assume it's a number if it has digits)
+      if (/\d/.test(val)) {
+        const cleanPhone = val.replace(/\D/g, '');
+        return `<a href="tel:${val}" class="contact-link">📞 ${val}</a>`;
+      }
+      return `<span class="value">${val}</span>`;
+    }
+
     function renderCard(row) {
       const card = document.createElement("div");
       card.className = "card";
 
-      const teamMembers = [
-        `${row['Name 1']} (${row['SRN 1']})`,
-        `${row['Name 2']} (${row['SRN 2']})`,
-        row['Name 3'] && row['SRN 3'] ? `${row['Name 3']} (${row['SRN 3']})` : null
-      ].filter(Boolean).join('<br>');
+      const members = [
+        { name: row['Name 1'], srn: row['SRN 1'] },
+        { name: row['Name 2'], srn: row['SRN 2'] },
+        { name: row['Name 3'], srn: row['SRN 3'] }
+      ].filter(m => m.name && m.srn);
 
       const categories = extractCategories(row);
       const domain = row["Mention the Domain Your team is working on"]?.trim();
+      const primary = row['Primary Contact number/email'];
+      const secondary = row['Secondary Contact number/email'];
 
-      const badgesHTML = `
-        <div class="badge-container">
-          ${categories.map(cat => {
-            const category = cat.toUpperCase();
-            let categoryClass = "";
-            if (category === "CATEGORY A") categoryClass = "category-cat1";
-            else if (category === "CATEGORY B") categoryClass = "category-cat2";
-            else if (category === "CATEGORY C") categoryClass = "category-cat3";
-            return `<div class="category-badge ${categoryClass}">${category}</div>`;
-          }).join("")}
-        </div>`;
-
-      const primary = row['Primary Contact number/email']?.trim();
-      const secondary = row['Secondary Contact number/email']?.trim();
-
-      const contactHTML = `
-        <p>
-          <span class="label">Primary Contact:</span><br>${primary || 'Not provided'}<br>
-          ${secondary ? `<span class="label">Secondary Contact:</span><br>${secondary}` : ''}
-        </p>`;
-
-      const domainHTML = domain ? `<p><span class="label">Project Domain:</span><br>${domain}</p>` : '';
+      const badgesHTML = categories.map(cat => {
+        const c = cat.toUpperCase();
+        let badgeClass = "badge-default";
+        if (c.includes("A")) badgeClass = "badge-a";
+        else if (c.includes("B")) badgeClass = "badge-b";
+        else if (c.includes("C")) badgeClass = "badge-c";
+        return `<span class="badge ${badgeClass}">${c}</span>`;
+      }).join("");
 
       card.innerHTML = `
-        ${badgesHTML}
-        <h3>Team Members</h3>
-        <p>${teamMembers}</p>
-        ${domainHTML}
-        ${contactHTML}
+        <div class="badge-container">${badgesHTML}</div>
+        <div class="card-content">
+          <h3>Team Members</h3>
+          <div class="info-item">
+            ${members.map(m => `<div class="value">${m.name} <span style="font-size: 0.8em; color: var(--text-muted)">(${m.srn})</span></div>`).join("")}
+          </div>
+          ${domain ? `
+            <div class="info-item">
+              <span class="label">Project Domain</span>
+              <div class="value">${domain}</div>
+            </div>
+          ` : ''}
+        </div>
+        <div class="contact-links">
+          <span class="label">Contact</span>
+          ${formatContact(primary) || ''}
+          ${formatContact(secondary) || ''}
+        </div>
       `;
 
       container.appendChild(card);
     }
 
-    window.addEventListener("scroll", () => {
-      const scrollBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 200;
-      if (scrollBottom && currentIndex < filteredData.length) {
+    // Intersection Observer for Infinite Scroll
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && currentIndex < filteredData.length) {
         renderNextBatch();
       }
-    });
+    }, { threshold: 0.1 });
+
+    // We need a sentinel element for the observer
+    const sentinel = document.createElement("div");
+    sentinel.id = "sentinel";
+    sentinel.style.height = "20px";
+    document.body.appendChild(sentinel);
+    observer.observe(sentinel);
   </script>
 </body>
 </html>
